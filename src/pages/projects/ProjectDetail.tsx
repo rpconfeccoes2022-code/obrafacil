@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../contexts/AuthContext'
 import { Expense, Income, Project, PROJECT_STATUS_LABEL } from '../../types/database'
 
 type Tab = 'visao_geral' | 'financeiro' | 'progresso' | 'materiais' | 'equipe' | 'documentos'
@@ -265,6 +266,7 @@ function QuickEntryModal({
   onClose: () => void
   onSaved: () => void
 }) {
+  const { profile } = useAuth()
   const [description, setDescription] = useState('')
   const [category, setCategory] = useState('')
   const [amount, setAmount] = useState('')
@@ -277,8 +279,16 @@ function QuickEntryModal({
     e.preventDefault()
     setSaving(true)
     setError(null)
+
+    if (!profile?.tenant_id) {
+      setSaving(false)
+      setError('Não foi possível identificar sua empresa. Recarregue a página e tente de novo.')
+      return
+    }
+
     const payload: Record<string, unknown> = {
       project_id: projectId,
+      tenant_id: profile.tenant_id,
       description: description || null,
       amount: Number(amount),
       payment_method: paymentMethod || null,

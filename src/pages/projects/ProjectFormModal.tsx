@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
+import { useAuth } from '../../contexts/AuthContext'
 import { Project, ProjectStatus, PROJECT_STATUS_LABEL } from '../../types/database'
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function ProjectFormModal({ project, onClose, onSaved }: Props) {
+  const { profile } = useAuth()
   const [name, setName] = useState(project?.name ?? '')
   const [clientName, setClientName] = useState(project?.client_name ?? '')
   const [clientPhone, setClientPhone] = useState(project?.client_phone ?? '')
@@ -44,9 +46,17 @@ export default function ProjectFormModal({ project, onClose, onSaved }: Props) {
       notes: notes || null,
     }
 
+    if (!project && !profile?.tenant_id) {
+      setSaving(false)
+      setError('Não foi possível identificar sua empresa. Recarregue a página e tente de novo.')
+      return
+    }
+
     const result = project
       ? await supabase.from('projects').update(payload).eq('id', project.id)
-      : await supabase.from('projects').insert(payload)
+      : await supabase
+          .from('projects')
+          .insert({ ...payload, tenant_id: profile!.tenant_id })
 
     setSaving(false)
 

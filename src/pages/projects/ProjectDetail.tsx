@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
+import { maskCurrencyDigits, currencyMaskToNumber } from '../../lib/currency'
 import { Expense, Income, Project, PROJECT_STATUS_LABEL } from '../../types/database'
 
 type Tab = 'visao_geral' | 'financeiro' | 'progresso' | 'materiais' | 'equipe' | 'documentos'
@@ -290,7 +291,7 @@ function QuickEntryModal({
       project_id: projectId,
       tenant_id: profile.tenant_id,
       description: description || null,
-      amount: Number(amount),
+      amount: currencyMaskToNumber(amount),
       payment_method: paymentMethod || null,
       [dateField]: date,
     }
@@ -329,12 +330,13 @@ function QuickEntryModal({
             <div>
               <label className="field-label">Valor (R$)</label>
               <input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="numeric"
                 required
                 className="field-input"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(maskCurrencyDigits(e.target.value))}
+                placeholder="0,00"
               />
             </div>
             <div>

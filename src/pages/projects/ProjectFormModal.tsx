@@ -1,6 +1,7 @@
 import { FormEvent, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import { useAuth } from '../../contexts/AuthContext'
+import { maskCurrencyDigits, currencyMaskToNumber, numberToCurrencyMask } from '../../lib/currency'
 import { Project, ProjectStatus, PROJECT_STATUS_LABEL } from '../../types/database'
 
 interface Props {
@@ -20,7 +21,7 @@ export default function ProjectFormModal({ project, onClose, onSaved }: Props) {
     project?.estimated_end_date ?? '',
   )
   const [contractValue, setContractValue] = useState(
-    project?.contract_value?.toString() ?? '',
+    project?.contract_value ? numberToCurrencyMask(project.contract_value) : '',
   )
   const [status, setStatus] = useState<ProjectStatus>(
     project?.status ?? 'planejamento',
@@ -41,7 +42,7 @@ export default function ProjectFormModal({ project, onClose, onSaved }: Props) {
       address: address || null,
       start_date: startDate || null,
       estimated_end_date: estimatedEndDate || null,
-      contract_value: contractValue ? Number(contractValue) : null,
+      contract_value: contractValue ? currencyMaskToNumber(contractValue) : null,
       status,
       notes: notes || null,
     }
@@ -134,11 +135,12 @@ export default function ProjectFormModal({ project, onClose, onSaved }: Props) {
             <div>
               <label className="field-label">Valor contratado (R$)</label>
               <input
-                type="number"
-                step="0.01"
+                type="text"
+                inputMode="numeric"
                 className="field-input"
                 value={contractValue}
-                onChange={(e) => setContractValue(e.target.value)}
+                onChange={(e) => setContractValue(maskCurrencyDigits(e.target.value))}
+                placeholder="0,00"
               />
             </div>
             <div>
